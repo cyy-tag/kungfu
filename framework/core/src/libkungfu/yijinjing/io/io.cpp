@@ -17,6 +17,7 @@ using namespace kungfu::yijinjing::journal;
 using namespace kungfu::yijinjing::nanomsg;
 
 namespace kungfu::yijinjing {
+// 主要针对nanomsg消息中间件
 class ipc_url_factory : public url_factory {
 public:
   virtual ~ipc_url_factory() {}
@@ -30,6 +31,7 @@ public:
   }
 };
 
+// 消息中间件的资源类, socket, 配置是否低时延, 服务端绑定位置和客户端连接位置
 class nanomsg_resource : public resource {
 protected:
   nanomsg_resource(const io_device &io_device, bool low_latency, protocol p)
@@ -56,9 +58,11 @@ public:
 
   void setup() override {}
 
+  // 如果是低时延直接返回不通知
   int notify() override { return low_latency_ ? 0 : publish("{}"); }
 
   int publish(const std::string &json_message, int flags = NN_DONTWAIT) override {
+    // 通过socket通知客户端
     return socket_.send(json_message, flags);
   }
 };
@@ -92,6 +96,7 @@ public:
   }
 };
 
+// 与publisher对应的 observer类
 class nanomsg_observer : public observer, protected nanomsg_resource {
 public:
   nanomsg_observer(const io_device &io_device, bool low_latency, protocol p)

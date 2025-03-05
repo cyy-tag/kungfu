@@ -13,6 +13,11 @@
 namespace kungfu::yijinjing {
 FORWARD_DECLARE_CLASS_PTR(session)
 
+/*
+ * 管理了publisher、observer、url_factory，
+ * 可以通过open_writer打开默认目录下的writer
+ * 通过open_reader打开相应路径下的reader。
+*/
 class io_device : public resource {
 public:
   io_device(data::location_ptr home, bool low_latency, bool lazy);

@@ -16,6 +16,10 @@ namespace kungfu::yijinjing::journal {
 /**
  * Journal class, the abstraction of continuous memory access
  */
+
+ // journal 完成对page的管理
+ // 由seek_to_time(int64_t nanotime) 查找当前frame要写入的对应位置
+ // tip:这里对page进行mmap系统调用会进行阻塞, 可以进行预分配page页, 避免阻塞写入进程
 class journal {
 public:
   journal(data::location_ptr location, uint32_t dest_id, bool is_writing, bool lazy)
@@ -51,7 +55,7 @@ private:
   const uint32_t dest_id_;
   const bool is_writing_;
   const bool lazy_;
-  page_ptr page_;
+  page_ptr page_; // 保存当前正在写的page
   frame_ptr frame_;
   uint64_t page_frame_nb_;
 
@@ -65,6 +69,8 @@ private:
   friend class writer;
 };
 
+
+// reader和writer封装对frame 读出和写入操作
 class reader {
 public:
   explicit reader(bool lazy) : lazy_(lazy), current_(nullptr){};
@@ -105,6 +111,8 @@ private:
   std::unordered_map<uint64_t, journal> journals_;
 };
 
+// journal 获取当前要写入的frame位置
+// open_data加锁分配要写入的空间 写入数据 close_data 写入完毕释放锁 防止竞态
 class writer {
 public:
   writer(const data::location_ptr &location, uint32_t dest_id, bool lazy, publisher_ptr publisher);
@@ -142,6 +150,7 @@ public:
    * @return a casted reference to the underlying memory address in mmap file
    */
   template <typename T> std::enable_if_t<size_fixed_v<T>, T &> open_data(int64_t trigger_time = 0) {
+    //先分配要写入的空间 frame_header + sizeof(T)[body]
     auto frame = open_frame(trigger_time, T::tag, sizeof(T));
     return const_cast<T &>(frame->template data<T>());
   }
@@ -202,7 +211,7 @@ public:
 
 private:
   const uint64_t frame_id_base_;
-  journal journal_;
+  journal journal_; // journal 对page进行管理, 找到要写入的位置
   std::mutex writer_mtx_ = {};
   publisher_ptr publisher_;
   size_t size_to_write_;

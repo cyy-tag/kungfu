@@ -14,6 +14,7 @@ journal::~journal() {
   }
 }
 
+// 当前页中frame切换到下一个frame
 void journal::next() {
   assert(page_.get() != nullptr);
   if (frame_->msg_type() == longfist::types::PageEnd::tag) {
@@ -25,11 +26,13 @@ void journal::next() {
 }
 
 void journal::seek_to_time(int64_t nanotime) {
-  int page_id = page::find_page_id(location_, dest_id_, nanotime);
-  load_page(page_id);
+  int page_id = page::find_page_id(location_, dest_id_, nanotime); // 从page_ids中找到离nanotime最近的page_id
+  load_page(page_id); //加载对应页，并将指针定位到page_header_length这一位置
+  // 找到对应的page
   while (page_->is_full() && page_->end_time() <= nanotime) {
     load_next_page();
   }
+  // 在page中找到要写入的frame的位置
   while (frame_->has_data() && frame_->gen_time() <= nanotime) {
     next();
   }

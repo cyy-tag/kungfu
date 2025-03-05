@@ -27,8 +27,8 @@ void page::set_last_frame_position(uint64_t position) {
 page_ptr page::load(const data::location_ptr &location, uint32_t dest_id, uint32_t page_id, bool is_writing,
                     bool lazy) {
   uint32_t page_size = find_page_size(location, dest_id);
-  std::string path = get_page_path(location, dest_id, page_id);
-  uintptr_t address = os::load_mmap_buffer(path, page_size, is_writing, lazy);
+  std::string path = get_page_path(location, dest_id, page_id); // python实现接口，获取到页的路径
+  uintptr_t address = os::load_mmap_buffer(path, page_size, is_writing, lazy); // mmap 映射页的内存
 
   // SPDLOG_TRACE("load page {}/{:08x}.{}.journal", location->uname, dest_id, page_id);
   // SPDLOG_TRACE("page_size {}, address {}", page_size, address);
@@ -37,8 +37,8 @@ page_ptr page::load(const data::location_ptr &location, uint32_t dest_id, uint32
     throw journal_error("unable to load page for " + path);
   }
 
-  page_header *header = reinterpret_cast<page_header *>(address);
-  if (header->last_frame_position == 0) {
+  page_header *header = reinterpret_cast<page_header *>(address); // 将首地址强转为page_header结构
+  if (header->last_frame_position == 0) { // 对page_header进行初始化
     header->version = __JOURNAL_VERSION__;
     header->page_header_length = sizeof(page_header);
     header->page_size = page_size;

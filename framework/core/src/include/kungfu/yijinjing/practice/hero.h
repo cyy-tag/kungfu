@@ -28,6 +28,9 @@ inline yijinjing::data::location_ptr make_system_location(const std::string &gro
 
 typedef std::unordered_map<uint32_t, yijinjing::journal::writer_ptr> WriterMap;
 
+// hero 是个单例, 每个进程只能构造一个
+// 否则会抛出异常
+// 通过io_device构造, 管理底层的journal、reader、writer
 class hero : public resource {
 public:
   explicit hero(yijinjing::io_device_ptr io_device);

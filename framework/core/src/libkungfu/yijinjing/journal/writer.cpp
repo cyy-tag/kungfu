@@ -15,7 +15,8 @@ writer::writer(const data::location_ptr &location, uint32_t dest_id, bool lazy, 
     : frame_id_base_(uint64_t(location->uid xor dest_id) << 32u), journal_(location, dest_id, true, lazy),
       publisher_(std::move(publisher)), size_to_write_(0),
       writer_start_time_32int_(time::nano_hashed(time::now_in_nano())) {
-  journal_.seek_to_time(time::now_in_nano());
+  journal_.seek_to_time(time::now_in_nano()); // 慢初始化遍历page找到要写入page页位置，并初始化
+  // 初始化后，以后的写入都是顺序的, 不再需要进行遍历查找, 只需要写满时下一页操作即可
 }
 
 uint64_t writer::current_frame_uid() {
@@ -25,15 +26,18 @@ uint64_t writer::current_frame_uid() {
   return frame_id_base_ | ((page_part | frame_part) xor writer_start_time_32int_);
 }
 
+// 开启新的frame, 初始化frame_header
 frame_ptr writer::open_frame(int64_t trigger_time, int32_t msg_type, uint32_t data_length) {
   assert(sizeof(frame_header) + data_length + sizeof(frame_header) <= journal_.page_->get_page_size());
   int64_t start_time = time::now_in_nano();
-  while (not writer_mtx_.try_lock()) {
+  while (not writer_mtx_.try_lock()) { // 进行加锁防止多线程同时写入
     if (time::now_in_nano() - start_time > 30 * time_unit::NANOSECONDS_PER_SECOND) {
       throw journal_error("Can not lock writer for " + journal_.location_->uname);
     }
   }
+  // 判断当前page是否写满
   if (journal_.current_frame()->address() + sizeof(frame_header) + data_length >= journal_.page_->address_border()) {
+    // 写满关闭当前页并打开下一页
     close_page(trigger_time);
   }
   auto frame = journal_.current_frame();
@@ -93,6 +97,7 @@ void writer::mark(int64_t trigger_time, int32_t msg_type) {
   close_frame(length);
 }
 
+// 写入frame body
 [[maybe_unused]] void writer::write_bytes(int64_t trigger_time, int32_t msg_type, const std::vector<uint8_t> &data,
                                           uint32_t length) {
   auto frame = open_frame(trigger_time, msg_type, length);
@@ -104,7 +109,7 @@ void writer::close_data() { close_frame(size_to_write_); }
 
 void writer::close_page(int64_t trigger_time) {
   page_ptr last_page = journal_.page_;
-  journal_.load_next_page();
+  journal_.load_next_page(); // 切换下一页
 
   frame last_page_frame;
   last_page_frame.set_address(last_page->last_frame_address());

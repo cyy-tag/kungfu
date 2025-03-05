@@ -32,6 +32,7 @@ public:
   virtual void setup() = 0;
 };
 
+// 当writer写完frame后, 会通过socket告知客户端, 可以看到
 class publisher : public resource {
 public:
   virtual ~publisher() = default;

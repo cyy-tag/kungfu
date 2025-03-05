@@ -35,7 +35,7 @@ hero::hero(io_device_ptr io_device)
       ledger_home_location_(make_system_location("service", "ledger", io_device->get_locator())),
       io_device_(std::move(io_device)), now_(0) {
 
-  os::handle_os_signals(this);
+  os::handle_os_signals(this); // 每个进程只构造一个, 判断是否重复构造
   add_location(0, get_io_device()->get_home());
   add_location(0, master_home_location_);
   add_location(0, master_cmd_location_);

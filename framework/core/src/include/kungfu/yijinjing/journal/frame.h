@@ -64,6 +64,7 @@ struct frame : event {
 
   [[nodiscard]] std::string to_string() const override { return std::string(reinterpret_cast<char *>(address())); }
 
+  /*将内存二进制拷贝至结构体，恢复数据类型*/
   template <typename T> size_t copy_data(const T &data) {
     size_t length = sizeof(T);
     memcpy(const_cast<void *>(data_address()), &data, length);

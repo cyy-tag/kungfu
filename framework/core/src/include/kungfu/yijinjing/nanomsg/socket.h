@@ -71,8 +71,10 @@ inline std::string get_protocol_name(protocol p) {
 
 class url_factory {
 public:
+  // 通过locator定位到服务端需要绑定的url
   [[nodiscard]] virtual std::string make_path_bind(data::location_ptr location, protocol p) const = 0;
 
+  // 通过locator定位到客户端需要连接的url
   [[nodiscard]] virtual std::string make_path_connect(data::location_ptr location, protocol p) const = 0;
 };
 
