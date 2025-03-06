@@ -70,6 +70,10 @@ void master::notify_master_deregister_on_exit() {
   }
 }
 
+/*
+ * 先在journal中标记当前session已结束
+ * 然后强制杀死apprentices进程
+ */
 void master::mark_session_end_on_exit() {
   auto now = time::now_in_nano();
   get_writer(location::PUBLIC)->mark(now, SessionEnd::tag);
@@ -87,6 +91,7 @@ void master::mark_session_end_on_exit() {
 
 void master::on_notify() { get_io_device()->get_publisher()->notify(); }
 
+//apprentice向master注册
 void master::register_app(const event_ptr &event) {
   auto io_device = std::dynamic_pointer_cast<io_device_master>(get_io_device());
   auto home = io_device->get_home();
@@ -161,6 +166,7 @@ void master::register_app(const event_ptr &event) {
 [[maybe_unused]] void master::publish_trading_day() { write_trading_day(0, get_writer(location::PUBLIC)); }
 
 void master::react() {
+  //rxcpp 响应式函数, 处理各种事件
   events_ | is(RequestWriteTo::tag) | $$(on_request_write_to(event));
   events_ | is(RequestWriteToBand::tag) | $$(on_request_write_to_band(event));
   events_ | is(RequestReadFrom::tag) | $$(on_request_read_from(event));
@@ -196,19 +202,24 @@ void master::on_active() {
   on_frame();
 }
 
+//每一帧进行调用, 处理定时器任务
 void master::on_frame() { handle_timer_tasks(); }
 
 void master::handle_timer_tasks() {
   auto now = time::now_in_nano();
   for (auto &app : timer_tasks_) {
+    // 不同客户端的定时任务, app_id为客户端编号, 每个app_id可能有多个定时任务
     uint32_t app_id = app.first;
     auto &app_tasks = app.second;
     for (auto it = app_tasks.begin(); it != app_tasks.end();) {
       auto &task = it->second;
       if (task.checkpoint <= now) {
+        //回写触发消息
         get_writer(app_id)->mark(0, Time::tag);
+        //设定下一个触发的时间和记录重复次数
         task.checkpoint += task.duration;
         task.repeat_count++;
+        //如果超过了重复执行次数, 就删除该定时任务
         if (task.repeat_count >= task.repeat_limit) {
           it = app_tasks.erase(it);
           continue;
@@ -351,6 +362,7 @@ void master::on_channel_request(const event_ptr &event) {
   }
 }
 
+//客户端注册定时任务请求
 void master::on_time_request(const event_ptr &event) {
   const TimeRequest &request = event->data<TimeRequest>();
   timer_tasks_.try_emplace(event->source());

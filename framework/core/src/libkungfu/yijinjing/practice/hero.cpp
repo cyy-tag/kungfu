@@ -55,6 +55,7 @@ bool hero::is_usable() { return io_device_->is_usable(); }
 
 void hero::setup() {
   io_device_->setup();
+  //rxcpp 响应函数式编程, 创建一个返回event_ptr监听事件 events_
   events_ = observable<>::create<event_ptr>([this](auto &s) { delegate_produce(this, s); }) | holdon();
   react();
   live_ = true;
@@ -328,45 +329,55 @@ void hero::require_write_to_band(int64_t trigger_time, uint32_t source_id,
   writer->write(trigger_time, msg);
 }
 
+//核心函数, 主循环从reader中获取新的信息数据
+//并调用on_next发送给所有订阅的观察者
 void hero::produce(const rx::subscriber<event_ptr> &sb) {
   try {
     do {
       live_ = drain(sb) && live_;
+      //处理完消息事件
       on_active();
+      //处理定时器事件
     } while (continual_ and live_);
   } catch (...) {
     live_ = false;
     sb.on_error(std::current_exception());
   }
   if (not live_) {
-    sb.on_completed();
+    sb.on_completed(); // 完成退出通知
   }
 }
 
 bool hero::drain(const rx::subscriber<event_ptr> &sb) {
   if (io_device_->get_home()->mode == mode::LIVE and io_device_->get_observer()->wait()) {
+    //盘中实时运行模式, 且是阻塞模式,等待消息通知
     const std::string &notice = io_device_->get_observer()->get_notice();
     now_ = time::now_in_nano();
     if (notice.length() > 2) {
+      //socket通信采用json格式信息，nanomsg_json和frame一样，都继承自event
       sb.on_next(std::make_shared<nanomsg_json>(notice));
     } else {
       on_notify();
     }
   }
+  //然后reader判断journal上的数据是否可读
+  //如果可读，就读取frame，调用on_next发送到观察者
   while (live_ and reader_->data_available()) {
     if (reader_->current_frame()->gen_time() <= end_time_) {
       int64_t frame_time = reader_->current_frame()->gen_time();
       if (frame_time > now_) {
         now_ = frame_time;
       }
+      //获取到新的数据，发送当前frame的地址
       sb.on_next(reader_->current_frame());
       on_frame();
-      reader_->next();
+      reader_->next(); //获取下一个可读的frame
     } else {
       SPDLOG_INFO("reached journal end {}", time::strftime(reader_->current_frame()->gen_time()));
       return false;
     }
   }
+  //回放或回测模式下, reader没有可读数据，代表回测结束
   if (get_io_device()->get_home()->mode != mode::LIVE and not reader_->data_available()) {
     SPDLOG_INFO("reached journal end {}", time::strftime(reader_->current_frame()->gen_time()));
     return false;
