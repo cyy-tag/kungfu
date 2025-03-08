@@ -46,11 +46,15 @@ class Strategy(wc.Strategy):
         self.ctx.books = {}
         self.__init_strategy(ctx.path)
 
+    # 输入具体的策略代码文件地址, 通过importlib在线导入
     def __init_strategy(self, path):
         strategy_dir = os.path.dirname(path)
         name_no_ext = os.path.split(os.path.basename(path))
         sys.path.append(os.path.relpath(strategy_dir))
+        # 具体py例子在 examples/strategy-python-simple
+        # 定义具体函数pre_start, post_start, pre_stop, post_stop
         self._module = importlib.import_module(os.path.splitext(name_no_ext[1])[0])
+        # 将具体的策略的函数转变为函数指针
         self._pre_start = getattr(self._module, "pre_start", lambda ctx: None)
         self._post_start = getattr(self._module, "post_start", lambda ctx: None)
         self._pre_stop = getattr(self._module, "pre_stop", lambda ctx: None)

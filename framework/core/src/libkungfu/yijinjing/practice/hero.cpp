@@ -66,11 +66,14 @@ void hero::step() {
   events_.connect(cs_);
 }
 
+// master启动入口
 void hero::run() {
   SPDLOG_INFO("[{:08x}] {} running", get_home_uid(), get_home_uname());
   SPDLOG_TRACE("from {} until {}", time::strftime(begin_time_), time::strftime(end_time_));
+  // 设置好订阅信息
   setup();
   continual_ = true;
+  // 开启主循环
   events_.connect(cs_);
   on_exit();
   SPDLOG_INFO("[{:08x}] {} done", get_home_uid(), get_home_uname());

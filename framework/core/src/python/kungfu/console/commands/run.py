@@ -15,7 +15,7 @@ wc = kungfu.__binding__.wingchun
 yjj = kungfu.__binding__.yijinjing
 service_command_context = kfc.pass_context("low_latency")
 
-
+# master, service 启动命令入口
 @kfc.command(help_priority=1)
 @click.option(
     "-m", "--mode", default="live", type=click.Choice(kfj.MODES.keys()), help="mode"

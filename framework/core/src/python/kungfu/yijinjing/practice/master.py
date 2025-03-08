@@ -30,7 +30,7 @@ def run_tasks(*args, **kwargs):
     for task_name in TASKS:
         TASKS[task_name](*args, **kwargs)
 
-
+# 继承yijingjing中pybind master类
 class Master(yjj.master):
     def __init__(self, ctx):
         yjj.master.__init__(

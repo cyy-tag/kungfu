@@ -4,6 +4,8 @@
 // Created by Keren Dong on 2019-06-20.
 //
 
+//runner 集中负责数据的分发工作，推送多个策略
+//然后每个策略都执行各自的on_quote函数
 #include <kungfu/wingchun/strategy/runner.h>
 
 using namespace kungfu::rx;
@@ -26,6 +28,7 @@ RuntimeContext_ptr Runner::get_context() const { return context_; }
 
 RuntimeContext_ptr Runner::make_context() { return std::make_shared<RuntimeContext>(*this, events_); }
 
+// 添加策略的实现, 使用vector进行存储
 void Runner::add_strategy(const Strategy_ptr &strategy) { strategies_.push_back(strategy); }
 
 void Runner::on_exit() { post_stop(); }
@@ -77,7 +80,7 @@ void Runner::post_start() {
   if (not started_) {
     return; // safe guard for live mode, in that case we will run truly when prepare process is done.
   }
-
+  // 每当快照数据到来时, 都将推送多个策略，然后每个策略都执行各自的on_quote函数
   events_ | is_own<Quote>(context_->get_broker_client()) |
       $$(invoke(&Strategy::on_quote, event->data<Quote>(), get_location(event->source())));
   events_ | is_own<Tree>(context_->get_broker_client()) |

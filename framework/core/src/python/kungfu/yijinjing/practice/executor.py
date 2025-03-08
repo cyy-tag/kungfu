@@ -23,6 +23,7 @@ wc = kungfu.__binding__.wingchun
 yjj = kungfu.__binding__.yijinjing
 
 
+# 注册系统程序master, service和 策略启动
 class ExecutorRegistry:
     def __init__(self, ctx):
         self.ctx = ctx
@@ -106,7 +107,9 @@ class ExecutorRegistry:
                         report("missing key/config in kungfuConfig")
                 else:
                     report("missing kungfuConfig")
-
+    
+    # 魔法方法可以直接像dict一样
+    # ExecutorRegistry[category] 直接获取self.executors元素
     def __getitem__(self, category):
         return self.executors[category]
 
@@ -116,7 +119,8 @@ class ExecutorRegistry:
     def __repr__(self):
         return json.dumps(self.executors, cls=RegistryJSONEncoder)
 
-
+# Master 服务加载启动类, 继承dict
+# 通过MasterLoader["master"](mode, low_latency) 调用 run函数实现启动
 class MasterLoader(dict):
     def __init__(self, ctx):
         super().__init__()
