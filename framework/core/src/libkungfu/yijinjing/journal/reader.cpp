@@ -63,6 +63,8 @@ void reader::next() {
   sort();
 }
 
+// 每次获取新数据之前先对数据进行排序
+// 将current_ 指向最前时间戳的journal
 void reader::sort() {
   int64_t min_time = time::now_in_nano();
   for (auto &pair : journals_) {

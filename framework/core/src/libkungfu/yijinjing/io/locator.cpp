@@ -15,6 +15,7 @@ namespace kungfu::yijinjing::data {
 namespace fs = std::filesystem;
 namespace es = longfist::enums;
 
+// 存储根目录, 默认 /home/user/.config/kungfu/home
 fs::path get_default_root() {
   char *kf_home = std::getenv("KF_HOME");
   if (kf_home != nullptr) {
@@ -33,6 +34,7 @@ fs::path get_default_root() {
   return root / "kungfu" / "home";
 }
 
+// 运行时的目录 /home/user/.config/kungfu/home/runtime
 std::string get_runtime_dir() {
   auto runtime_dir = std::getenv("KF_RUNTIME_DIR");
   if (runtime_dir != nullptr) {
@@ -65,6 +67,7 @@ std::string get_root_dir(es::mode m, const std::vector<std::string> &tags) {
   }
 }
 
+// 默认locator 实时模式
 locator::locator() : root_(get_runtime_dir()), dir_mode_(es::mode::LIVE) {}
 
 locator::locator(es::mode m, const std::vector<std::string> &tags) : dir_mode_(m) {

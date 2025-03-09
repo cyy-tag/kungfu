@@ -18,6 +18,9 @@ using namespace std::chrono;
 
 namespace kungfu::yijinjing::practice {
 
+/**
+ * location_ptr 打开数据监听的位置
+ */
 apprentice::apprentice(location_ptr home, bool low_latency)
     : hero(std::make_shared<io_device_client>(home, low_latency)), trading_day_(time::today_start()) {}
 

@@ -43,8 +43,11 @@ MarketDataXTP::~MarketDataXTP() {
   }
 }
 
+// 登录行情柜台
 void MarketDataXTP::on_start() {
+  // public_wirter存储普通行情信息
   public_wirter_ = get_writer(0);
+  // 根据名称分配uid
   level2_tick_band_uid_ = request_band("market-data-band");
 
   MDConfiguration config = nlohmann::json::parse(get_config());
@@ -148,6 +151,7 @@ void MarketDataXTP::OnSubscribeAllTickByTick(XTP_EXCHANGE_TYPE exchange_id, XTPR
   }
 }
 
+// 获取沪深当前交易日合约部分静态信息
 void MarketDataXTP::OnQueryAllTickers(XTPQSI *ticker_info, XTPRI *error_info, bool is_last) {
   if (nullptr != error_info && error_info->error_id != 0) {
     SPDLOG_ERROR("error_id : {} , error_msg : {}", error_info->error_id, error_info->error_msg);
@@ -165,6 +169,7 @@ void MarketDataXTP::OnQueryAllTickers(XTPQSI *ticker_info, XTPRI *error_info, bo
   SPDLOG_TRACE("instrument {}", instrument.to_string());
 }
 
+// 行情通知函数
 void MarketDataXTP::OnDepthMarketData(XTPMD *market_data, int64_t *bid1_qty, int32_t bid1_count, int32_t max_bid1_count,
                                       int64_t *ask1_qty, int32_t ask1_count, int32_t max_ask1_count) {
   Quote &quote = public_wirter_->open_data<Quote>(0);
@@ -172,6 +177,7 @@ void MarketDataXTP::OnDepthMarketData(XTPMD *market_data, int64_t *bid1_qty, int
   public_wirter_->close_data();
 }
 
+// 订阅逐笔行情接口通知函数, 写入深度行情
 void MarketDataXTP::OnTickByTick(XTPTBT *tbt_data) {
   if (tbt_data->type == XTP_TBT_ENTRUST) {
     Entrust &entrust = get_writer(level2_tick_band_uid_)->open_data<Entrust>(0);

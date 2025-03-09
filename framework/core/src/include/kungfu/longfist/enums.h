@@ -62,6 +62,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(category, {
 
 inline std::ostream &operator<<(std::ostream &os, category t) { return os << int8_t(t); }
 
+// 获取目录名称, 总共分为：行情md, 交易td, 策略strategy, 系统system
 inline std::string get_category_name(category c) {
   switch (c) {
   case category::MD:
@@ -76,6 +77,7 @@ inline std::string get_category_name(category c) {
   }
 }
 
+// 根据名称获取枚举变量
 inline category get_category_by_name(const std::string &name) {
   if (name == "md")
     return category::MD;

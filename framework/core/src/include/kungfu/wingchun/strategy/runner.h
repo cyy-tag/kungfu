@@ -73,6 +73,7 @@ private:
     }
   }
 
+  // 遍历所有的策略，调用注册的回调函数
   template <typename TradingData, typename OnMethod = void (Strategy::*)(Context_ptr &, const TradingData &,
                                                                          const kungfu::yijinjing::data::location_ptr &)>
   void invoke(OnMethod method, const TradingData &data, const kungfu::yijinjing::data::location_ptr &location) {

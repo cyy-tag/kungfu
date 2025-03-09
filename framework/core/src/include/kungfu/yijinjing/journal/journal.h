@@ -17,6 +17,15 @@ namespace kungfu::yijinjing::journal {
  * Journal class, the abstraction of continuous memory access
  */
 
+ /**
+  * journal、reader、writer三者的关系
+  * journal 负责管理page
+  * writer 和 journal 1对1 的关系, 1个writer代表一种情形下的数据写入
+  * reader 和 journal, 1对多的关系
+  * 也就是每种情形的数据是使用writer单独写入
+  * reader对多种写入的数据进行管理，并按照时间戳获取最新的数据
+  */
+
  // journal 完成对page的管理
  // 由seek_to_time(int64_t nanotime) 查找当前frame要写入的对应位置
  // tip:这里对page进行mmap系统调用会进行阻塞, 可以进行预分配page页, 避免阻塞写入进程

@@ -18,6 +18,7 @@ namespace kungfu::wingchun::broker {
 FORWARD_DECLARE_CLASS_PTR(BrokerVendor)
 FORWARD_DECLARE_CLASS_PTR(BrokerService)
 
+// 行情代理供应商 继承apprentice
 class BrokerVendor : public yijinjing::practice::apprentice {
 public:
   typedef yijinjing::data::locator_ptr locator_ptr;
@@ -37,6 +38,7 @@ private:
   void notify_broker_state();
 };
 
+// 代理服务, 提供供应商的功能
 class BrokerService {
 public:
   typedef longfist::enums::BrokerState BrokerState;
