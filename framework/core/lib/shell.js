@@ -29,8 +29,11 @@ const utils = {
   },
 
   getNpmConfigValue: function (key) {
-    return shell.runAndCollect('npm', ['config', 'get', key], { silent: true })
-      .out;
+    return shell.runAndCollect(
+      'npm',
+      ['config', 'get', key, '--no-workspaces'],
+      { silent: true },
+    ).out;
   },
 
   findBinaryDependency: function (packageJson) {
