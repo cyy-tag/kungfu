@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 class Pipenv(object):
-    SEED_PACKAGES = ["pip", "setuptools", "virtualenv", "wheel"]
+    SEED_PACKAGES = ["pip", "setuptools", "virtualenv", "wheel", "poetry"]
 
     def __init__(self, root_dir=Shell.core_dir):
         self.pipfile_path = os.path.join(root_dir, "Pipfile")
